@@ -32,4 +32,4 @@
 
 1. Клонуйте репозиторій:
 ```bash
-git clone [https://github.com/your-username/tradesim.git](https://github.com/your-username/tradesim.git)
+git clone https://github.com/raychiikk/TradeSim.git
