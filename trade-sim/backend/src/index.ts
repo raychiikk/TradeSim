@@ -1,25 +1,25 @@
-import express from 'express';
-import type { Request, Response } from 'express';
-
-import { OrderFactory } from './models/OrderFactory.ts';
+// src/index.ts
+import express, { type Request, type Response } from 'express';
+import { OrderFactory } from './models/OrderFactory.js';
+import { TradeHistory } from './services/TradeHistory.js';
 
 const app = express();
 const PORT = 3000;
 
-// Базовий маршрут (Route) для перевірки працездатності
 app.get('/', (req: Request, res: Response) => {
     res.send("TradeSim API is running");
 });
 
-// Запуск сервера та прослуховування порту
 app.listen(PORT, () => {
-    console.log(`Сервер TradeSim успішно запущено на порту ${PORT}!`);
+    console.log(`Сервер TradeSim успішно запущено на порту ${PORT}!\n`);
     
-    // === ТЕСТУВАННЯ ПАТЕРНУ FACTORY METHOD ===
-    console.log('\n--- Симуляція створення ордерів ---');
+    console.log('--- Симуляція створення ордерів (Factory) та запису (Singleton) ---');
 
     try {
-        // 1. Створюємо ринковий ордер (market)
+        // Отримуємо єдиний екземпляр історії торгів
+        const history = TradeHistory.getInstance();
+
+        // Створюємо та виконуємо перший ордер
         const myFirstOrder = OrderFactory.createOrder({
             type: 'market',
             id: 'ord-001',
@@ -27,33 +27,27 @@ app.listen(PORT, () => {
             side: 'buy',
             amount: 0.5
         });
-        
-        // Викликаємо метод виконання
         myFirstOrder.execute();
+        history.addOrder(myFirstOrder); // Зберігаємо в Singleton
 
-        // 2. Створюємо лімітний ордер (limit)
+        // Створюємо та виконуємо другий ордер
         const mySecondOrder = OrderFactory.createOrder({
             type: 'limit',
             id: 'ord-002',
             symbol: 'ETH/USDT',
             side: 'sell',
             amount: 10,
-            targetPrice: 3500 // Специфічне поле
+            targetPrice: 3500
         });
-        
         mySecondOrder.execute();
+        history.addOrder(mySecondOrder); // Зберігаємо в Singleton
 
-        // 3. Тестуємо захист Фабрики (розкоментуй наступні рядки, щоб побачити помилку)
-        // const badOrder = OrderFactory.createOrder({
-        //     type: 'limit',
-        //     id: 'ord-003',
-        //     symbol: 'SOL/USDT',
-        //     side: 'buy',
-        //     amount: 100
-        //     // Забули вказати targetPrice!
-        // });
+        // Перевірка патерну Singleton: намагаємося отримати екземпляр знову
+        const anotherHistoryReference = TradeHistory.getInstance();
+        console.log(`\nПеревірка Singleton: чи співпадають об'єкти? -> ${history === anotherHistoryReference}`);
+        console.log(`Кількість збережених ордерів у "новій" змінній: ${anotherHistoryReference.getOrders().length}`);
 
     } catch (error) {
-        console.error('Сталася помилка у Фабриці:', error);
+        console.error('Сталася помилка:', error);
     }
 });
