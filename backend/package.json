@@ -20,8 +20,10 @@
   },
   "homepage": "https://github.com/raychiikk/TradeSim#readme",
   "devDependencies": {
+    "@prisma/client": "^6.19.3",
     "@types/express": "^5.0.6",
     "@types/node": "^25.3.0",
+    "prisma": "^6.19.3",
     "ts-node": "^10.9.2",
     "typescript": "^5.9.3"
   },

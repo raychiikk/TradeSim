@@ -1,0 +1,28 @@
+// prisma/schema.prisma
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Order {
+  id        String   @id @default(uuid())
+  orderId   String   @unique
+  symbol    String
+  side      String
+  amount    Float
+  type      String
+  createdAt DateTime @default(now())
+}
+
+// таблиця зберігає стан патерну Strategy
+model BotConfig {
+  id        String   @id @default(uuid())
+  botName   String   @unique              
+  strategy  String                        // назва активної стратегії ('RSI' або 'MovingAverage')
+  updatedAt DateTime @updatedAt          
+}
