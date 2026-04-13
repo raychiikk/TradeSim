@@ -3,6 +3,14 @@ import { PrismaClient } from '@prisma/client';
 
 const prisma = new PrismaClient();
 
+/**
+ * Глобальна історія торгових транзакцій системи.
+ * @class TradeHistory
+ * @description Реалізує твірний патерн **Singleton** (Одинак).
+ * Гарантує, що в усьому додатку існує лише один єдиний екземпляр історії ордерів,
+ * забезпечуючи централізований доступ до збережених даних з будь-якої точки програми.
+ */
+
 export class TradeHistory {
     private static instance: TradeHistory;
 
