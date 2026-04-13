@@ -1,11 +1,10 @@
-// src/services/TradeHistory.ts
-import { type IOrder } from '../models/Orders.js';
+// backend/src/services/TradeHistory.ts
+import { PrismaClient } from '@prisma/client';
+
+const prisma = new PrismaClient();
 
 export class TradeHistory {
-
     private static instance: TradeHistory;
-
-    private orders: IOrder[] = [];
 
     private constructor() {}
 
@@ -16,12 +15,26 @@ export class TradeHistory {
         return TradeHistory.instance;
     }
 
-    public addOrder(order: IOrder): void {
-        this.orders.push(order);
-        console.log(`[TradeHistory] Ордер ${order.id} додано до історії. Всього ордерів: ${this.orders.length}`);
+    public async addOrder(order: any): Promise<void> {
+        try {
+            await prisma.order.create({
+                data: {
+                    orderId: order.id || `ord-${Math.floor(Math.random() * 1000)}`,
+                    symbol: order.symbol || "BTC/USDT",
+                    side: order.side || "buy",
+                    amount: order.amount || 0,
+                    type: order.type || "market", 
+                }
+            });
+            console.log(`[TradeHistory] Ордер ${order.id} успішно записано в базу!`);
+        } catch (error) {
+            console.error(`[TradeHistory] Помилка запису в БД:`, error);
+        }
     }
 
-    public getOrders(): IOrder[] {
-        return this.orders;
+    public async getAllOrders() {
+        return await prisma.order.findMany({
+            orderBy: { createdAt: 'desc' }
+        });
     }
 }
