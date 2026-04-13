@@ -1,5 +1,6 @@
 // src/index.ts
 import express, { type Request, type Response } from 'express';
+import cors from 'cors';
 
 import { OrderFactory } from './models/OrderFactory.js';
 import { TradeHistory } from './services/TradeHistory.js';
@@ -13,7 +14,47 @@ import { CryptoBacktest, ForexBacktest } from './services/BacktestTemplate.js';
 import { TradingFacade } from './services/TradingFacade.js';
 
 const app = express();
-const PORT = 3000;
+
+// ДОДАНО: Налаштування для фронтенду
+app.use(cors());
+app.use(express.json());
+
+const PORT = 3001; // Змінили на 3001, щоб працювало з React
+
+// ДОДАНО: API-маршрут, який віддає ордери з бази даних у React
+app.get('/api/orders', async (req: Request, res: Response) => {
+    try {
+        const history = TradeHistory.getInstance();
+        const orders = await history.getAllOrders();
+        res.json(orders);
+    } catch (error) {
+        res.status(500).json({ error: "Помилка отримання ордерів з БД" });
+    }
+});
+
+// Глобальний екземпляр нашого бота, щоб ми могли керувати ним через API
+const trader = new AutoTrader(new MovingAverageStrategy(), "AlphaBot");
+
+// НОВИЙ МАРШРУТ: Приймає команду з фронтенду і змінює патерн Strategy
+app.post('/api/strategy', async (req: Request, res: Response) => {
+    try {
+        const { strategy } = req.body;
+
+        if (strategy === 'MovingAverage') {
+            await trader.setStrategy(new MovingAverageStrategy());
+        } else if (strategy === 'RSI') {
+            await trader.setStrategy(new RSIStrategy());
+        } else {
+            res.status(400).json({ error: "Невідома стратегія" });
+            return;
+        }
+
+        console.log(`[API] Фронтенд змінив стратегію на ${strategy}`);
+        res.json({ message: "Стратегію успішно змінено!" });
+    } catch (error) {
+        res.status(500).json({ error: "Помилка сервера" });
+    }
+});
 
 app.get('/', (req: Request, res: Response) => {
     res.send("TradeSim API is running with all 12 patterns!");
