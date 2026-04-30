@@ -12,16 +12,15 @@ import { MovingAverageStrategy, RSIStrategy, AutoTrader } from './services/Tradi
 import { TradeOrder } from './models/OrderState.js';
 import { CryptoBacktest, ForexBacktest } from './services/BacktestTemplate.js';
 import { TradingFacade } from './services/TradingFacade.js';
+import { BacktestService } from './services/BacktestService.js';
 
 const app = express();
 
-// ДОДАНО: Налаштування для фронтенду
 app.use(cors());
 app.use(express.json());
 
-const PORT = 3001; // Змінили на 3001, щоб працювало з React
+const PORT = 3001; 
 
-// ДОДАНО: API-маршрут, який віддає ордери з бази даних у React
 app.get('/api/orders', async (req: Request, res: Response) => {
     try {
         const history = TradeHistory.getInstance();
@@ -32,10 +31,39 @@ app.get('/api/orders', async (req: Request, res: Response) => {
     }
 });
 
-// Глобальний екземпляр нашого бота, щоб ми могли керувати ним через API
+app.get('/api/backtest', async (req, res) => {
+    try {
+        const size = parseInt(req.query.size as string) || 1000000;
+        const threads = parseInt(req.query.threads as string) || 4;
+
+        const backtestService = new BacktestService();
+        
+        console.log(`[Backtest] Генерація ${size} записів...`);
+        const mockData = backtestService.generateMockData(size);
+
+        console.log(`[Backtest] Запуск ПОСЛІДОВНОГО обчислення...`);
+        const seqResult = backtestService.runSequential(mockData);
+
+        console.log(`[Backtest] Запуск ПАРАЛЕЛЬНОГО обчислення (${threads} потоків)...`);
+        const parResult = await backtestService.runParallel(mockData, threads);
+
+        const speedup = (seqResult.duration / parResult.duration).toFixed(2);
+
+        res.json({
+            dataSize: size,
+            threadsUsed: threads,
+            sequential: seqResult,
+            parallel: parResult,
+            speedup: `${speedup}x`
+        });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: "Помилка під час бектестингу" });
+    }
+});
+
 const trader = new AutoTrader(new MovingAverageStrategy(), "AlphaBot");
 
-// НОВИЙ МАРШРУТ: Приймає команду з фронтенду і змінює патерн Strategy
 app.post('/api/strategy', async (req: Request, res: Response) => {
     try {
         const { strategy } = req.body;
@@ -105,21 +133,21 @@ app.listen(PORT, () => {
         const ticker = new PriceTicker();
         ticker.attach(new TradingBot("Alpha"));
         ticker.attach(new Dashboard());
-        ticker.updatePrice("BTC/USDT", 66000); // Сповістить усіх підписників
+        ticker.updatePrice("BTC/USDT", 66000); 
         console.log("");
 
         // 7. STRATEGY (Стратегія) 
         console.log("7. STRATEGY ");
         const trader = new AutoTrader(new MovingAverageStrategy());
         trader.evaluateMarket("ETH/USDT", 3400);
-        trader.setStrategy(new RSIStrategy()); // Зміна алгоритму на льоту
+        trader.setStrategy(new RSIStrategy()); 
         trader.evaluateMarket("ETH/USDT", 3400);
 
         // 8. STATE (Стан)
         console.log("8. STATE ");
         const lifecycleOrder = new TradeOrder("ord-state-99", "ADA/USDT", 1000);
-        lifecycleOrder.fill();   // Успішно виконається
-        lifecycleOrder.cancel(); // Заблокується, бо вже виконаний
+        lifecycleOrder.fill();   
+        lifecycleOrder.cancel(); 
         console.log("");
 
         // 9. TEMPLATE METHOD (Шаблонний метод) 
