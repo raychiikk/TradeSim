@@ -54,7 +54,14 @@ export class BacktestService {
         const workers: Promise<{ profit: number, tradesExecuted: number }>[] = [];
 
         for (let i = 0; i < threadsCount; i++) {
-            const startIdx = i * chunkSize;
+            // Змінено з const на let, щоб можна було відняти 100
+            let startIdx = i * chunkSize;
+            
+            // ФІКС: Додаємо 100 елементів історії для всіх потоків, крім першого
+            if (i > 0) {
+                startIdx -= 100;
+            }
+
             const endIdx = Math.min((i + 1) * chunkSize, prices.length);
             const chunk = prices.slice(startIdx, endIdx);
 

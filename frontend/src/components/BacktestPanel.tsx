@@ -10,7 +10,6 @@ export default function BacktestPanel() {
         setLoading(true);
         setResult(null);
         try {
-            // Звертаємося до нашого бекенду на порт 3001
             const response = await fetch(`http://localhost:3001/api/backtest?size=${size}&threads=${threads}`);
             const data = await response.json();
             setResult(data);
@@ -23,7 +22,7 @@ export default function BacktestPanel() {
 
     return (
         <div className="bg-slate-800 p-6 rounded-xl shadow-lg text-white mb-6 border border-slate-700">
-            <h2 className="text-2xl font-bold mb-4 text-blue-400">Мультипоточний Бектестинг (Лаба №3)</h2>
+            <h2 className="text-2xl font-bold mb-4 text-blue-400">Мультипоточний Бектестинг</h2>
             <p className="text-slate-400 mb-6 text-sm">
                 Порівняння швидкодії розрахунку торгових індикаторів на великих масивах ринкових даних (Sequential vs Parallel).
             </p>
@@ -63,7 +62,6 @@ export default function BacktestPanel() {
                 {loading ? 'Виконання важких математичних обчислень...' : ' Запустити Benchmark'}
             </button>
 
-            {/* Блок з результатами */}
             {result && (
                 <div className="mt-6 p-5 bg-slate-900/80 rounded-xl border border-slate-700">
                     <h3 className="text-xl font-semibold mb-4 text-green-400 flex items-center gap-2">
