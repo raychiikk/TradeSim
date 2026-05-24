@@ -1,6 +1,17 @@
 import { parentPort, workerData } from 'worker_threads';
 
-function runHeavyMarketAnalysis(prices: number[]): { profit: number, tradesExecuted: number } {
+/**
+ * @module BacktestWorker
+ * Окремий потік для паралельного розрахунку торгових індикаторів.
+ * Дозволяє розвантажити основний потік Node.js при роботі з великими масивами даних.
+ */
+
+/**
+ * Виконує обчислення індикатора та приймає торгові рішення на основі переданого масиву цін.
+ * @param prices Масив котирувань (фрагмент загальних даних), який має обробити цей потік.
+ * @returns Об'єкт, що містить загальний прибуток (profit) та кількість здійснених угод (tradesExecuted).
+ */
+export function runHeavyMarketAnalysis(prices: number[]): { profit: number, tradesExecuted: number } {
     let profit = 0;
     let tradesExecuted = 0;
     let position = 0; 

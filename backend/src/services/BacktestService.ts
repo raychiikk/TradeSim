@@ -5,7 +5,19 @@ import { fileURLToPath } from 'url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
+/**
+ * Сервіс для симуляції алгоритмічної торгівлі (бектестингу).
+ * Забезпечує порівняльний аналіз продуктивності між послідовним обчисленням
+ * в основному потоці та паралельним обчисленням за допомогою Worker Threads.
+ */
 export class BacktestService {
+    
+    /**
+     * Генерує масив псевдовипадкових ринкових цін для симуляції історичних котирувань.
+     * Використовує Float64Array для початкової генерації з метою оптимізації роботи з пам'яттю.
+     * * @param size - Загальна кількість записів цін, яку необхідно згенерувати.
+     * @returns Масив згенерованих котирувань типу number[].
+     */
     public generateMockData(size: number): number[] {
         const data = new Float64Array(size); 
         let currentPrice = 50000; 
@@ -16,6 +28,12 @@ export class BacktestService {
         return Array.from(data);
     }
 
+    /**
+     * Запускає послідовний аналіз ринку в головному потоці (Main Thread).
+     * Імітує ресурсомісткі математичні операції для розрахунку тригерів торгових стратегій.
+     * * @param prices - Масив історичних котирувань для аналізу.
+     * @returns Об'єкт із результатами тестування: час виконання (duration), прибуток (profit) та кількість угод (trades).
+     */
     public runSequential(prices: number[]): { duration: number, profit: number, trades: number } {
         const start = performance.now();
         
@@ -45,6 +63,14 @@ export class BacktestService {
         return { duration: end - start, profit, trades: tradesExecuted };
     }
 
+    /**
+     * Асинхронно розподіляє обробку масиву даних між декількома паралельними потоками.
+     * Реалізує механізм перекриття даних (Data Overlap) на межах чанків для збереження контексту індикаторів,
+     * зміщуючи індекс початку для кожного потоку (окрім першого) на 100 елементів назад.
+     * * @param prices - Повний масив історичних котирувань.
+     * @param threadsCount - Кількість виділених потоків (Worker Threads) для обробки.
+     * @returns Проміс із агрегованими результатами роботи всіх воркерів.
+     */
     public async runParallel(prices: number[], threadsCount: number): Promise<{ duration: number, profit: number, trades: number }> {
         const start = performance.now();
         const chunkSize = Math.ceil(prices.length / threadsCount);
@@ -54,10 +80,8 @@ export class BacktestService {
         const workers: Promise<{ profit: number, tradesExecuted: number }>[] = [];
 
         for (let i = 0; i < threadsCount; i++) {
-            // Змінено з const на let, щоб можна було відняти 100
             let startIdx = i * chunkSize;
             
-            // ФІКС: Додаємо 100 елементів історії для всіх потоків, крім першого
             if (i > 0) {
                 startIdx -= 100;
             }
